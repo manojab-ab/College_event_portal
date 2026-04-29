@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Visuals | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <p class="eyebrow">Visuals</p>
+    <h1>Graph view of events and winners</h1>
+    <p>Choose the graph and filter combination you want, then generate one chart from the portal data.</p>
+</section>
+
+<section class="panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Visual selector</p>
+            <h2>Choose graph and filters</h2>
+        </div>
+    </div>
+    <form class="form-panel" method="get">
+        <div class="form-grid">
+            <select name="graph" required>
+                {% for value, label in graph_options %}
+                    <option value="{{ value }}" {% if selected_graph == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="graph_type">
+                {% for value, label in graph_type_options %}
+                    <option value="{{ value }}" {% if selected_graph_type == value %}selected{% endif %}>{{ label }} graph</option>
+                {% endfor %}
+            </select>
+
+            <select name="school">
+                <option value="">All schools</option>
+                {% for school in school_options %}
+                    <option value="{{ school.name }}" {% if selected_school == school.name %}selected{% endif %}>{{ school.name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="year">
+                <option value="">All years</option>
+                {% for year in visual_year_options %}
+                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+            </select>
+
+            <select id="visual_event_name" name="event_name">
+                <option value="">All events</option>
+                {% for event_name in event_names %}
+                    <option value="{{ event_name }}" {% if selected_event == event_name %}selected{% endif %}>{{ event_name }}</option>
+                {% endfor %}
+            </select>
+
+            <select id="visual_competition_name" name="competition_name">
+                <option value="">{% if selected_event %}{% if competition_options %}Select competition{% else %}No competitions under this event{% endif %}{% else %}All competitions{% endif %}</option>
+                {% for competition_name in competition_options %}
+                    <option value="{{ competition_name }}" {% if selected_competition == competition_name %}selected{% endif %}>{{ competition_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="primary-button" type="submit">Show Graph</button>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Selected visual</p>
+            <h2>{{ selected_visual.title if selected_visual else "No matching graph yet" }}</h2>
+        </div>
+    </div>
+    {% if selected_visual %}
+        <article class="chart-card chart-focus-card">
+            <img class="chart-image" src="data:image/png;base64,{{ selected_visual.image }}" alt="{{ selected_visual.title }}">
+        </article>
+    {% else %}
+        <article class="list-card">
+            <strong>No graph available</strong>
+            <small>Try another graph or change the filter combination.</small>
+        </article>
+    {% endif %}
+</section>
+<script id="visualCompetitionMap" type="application/json">{{ visual_event_competition_map|tojson }}</script>
+{% endblock %}

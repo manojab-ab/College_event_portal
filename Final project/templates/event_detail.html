@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} | College Event Portal{% endblock %}
+
+{% block content %}
+{% if event.wallpaper_path %}
+    <style>
+        .wallpaper-layer {
+            background-image: linear-gradient(rgba(7, 15, 30, 0.62), rgba(7, 15, 30, 0.62)), url("{{ url_for('static', filename=event.wallpaper_path) }}") !important;
+        }
+    </style>
+{% endif %}
+<section class="page-intro">
+    <p class="eyebrow">Event details</p>
+    <h1>{{ event.title }}</h1>
+    <p>{{ event.description or "No description added." }}</p>
+</section>
+
+{% if event.poster_image_path %}
+    <section class="panel">
+        <img class="event-corner-image" src="{{ url_for('static', filename=event.poster_image_path) }}" alt="{{ event.title }} poster">
+    </section>
+{% endif %}
+
+<section class="stats-grid">
+    <article class="stat-card"><span>Total prize money</span><strong>Rs. {{ "{:,}".format(event.total_prize_money or 0) }}</strong></article>
+    <article class="stat-card"><span>Competitions</span><strong>{{ event.competition_count }}</strong></article>
+    <article class="stat-card"><span>Event year</span><strong>{{ event.event_year or "-" }}</strong></article>
+    <article class="stat-card"><span>Registrations</span><strong>{{ event.registrations|length }}</strong></article>
+    <article class="stat-card"><span>School / Department</span><strong>{{ event.school_name or "-" }} / {{ event.department_name or "-" }}</strong></article>
+    <article class="stat-card"><span>Results announced</span><strong>{{ event.announcement_count }}</strong></article>
+    <article class="stat-card"><span>Registration status</span><strong>{{ "Open" if event.registration_open else "Closed" }}</strong></article>
+</section>
+
+<section class="panel" id="results-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Live result board</p>
+            <h2>View announced results</h2>
+        </div>
+    </div>
+
+    {% if event.announcement_count %}
+        <form class="filter-row" method="get">
+            <select name="selected_result_competition">
+                <option value="">Select competition</option>
+                {% for competition_name in announcement_competitions %}
+                    <option value="{{ competition_name }}" {% if selected_result_competition == competition_name %}selected{% endif %}>{{ competition_name }}</option>
+                {% endfor %}
+            </select>
+            <button class="primary-button" type="submit">Show Result</button>
+        </form>
+
+        {% if selected_result_competition %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Competition</th>
+                            <th>Position</th>
+                            <th>Result</th>
+                            <th>Prize</th>
+                            <th>Participant</th>
+                            <th>Registration No.</th>
+                            <th>Team name</th>
+                            {% if is_admin %}<th>Action</th>{% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for announcement in displayed_announcements %}
+                            <tr>
+                                <td>{{ announcement.competition_name }}</td>
+                                <td>{{ announcement.position }}</td>
+                                <td>{{ announcement.result_label or "-" }}</td>
+                                <td>Rs. {{ "{:,}".format(announcement.prize_money or 0) }}</td>
+                                <td>{{ announcement.participant_name }}</td>
+                                <td>{{ announcement.registration_number or "-" }}</td>
+                                <td>{{ announcement.team_name or "-" }}</td>
+                                {% if is_admin %}
+                                    <td>
+                                        <form method="post">
+                                            <input type="hidden" name="action" value="delete_announcement">
+                                            <input type="hidden" name="announcement_id" value="{{ announcement.id }}">
+                                            <button class="danger-button" type="submit">Delete</button>
+                                        </form>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="{% if is_admin %}8{% else %}7{% endif %}">No result announced yet for this competition.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <article class="list-card">
+                <strong>Result announced for this event</strong>
+                <small>Select a competition first to view the announced result.</small>
+            </article>
+        {% endif %}
+    {% else %}
+        <article class="list-card">
+            <strong>No results announced yet</strong>
+            <small>Once admin announces a result, users will be able to view it here by competition.</small>
+        </article>
+    {% endif %}
+</section>
+
+<section class="content-grid">
+    <div class="panel wide-panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Competition list</p>
+                <h2>Prize distribution</h2>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Competition</th>
+                        <th>Venue</th>
+                        <th>1st prize</th>
+                        <th>2nd prize</th>
+                        <th>3rd prize</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for competition in event.competitions %}
+                        <tr>
+                            <td>{{ competition.competition_name }}</td>
+                            <td>{{ competition.venue or "-" }}</td>
+                            <td>Rs. {{ "{:,}".format(competition.first_prize or 0) }}</td>
+                            <td>Rs. {{ "{:,}".format(competition.second_prize or 0) }}</td>
+                            <td>Rs. {{ "{:,}".format(competition.third_prize or 0) }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="panel">
+        {% if is_admin %}
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Result panel</p>
+                    <h2>Announce result</h2>
+                </div>
+            </div>
+            <form class="filter-row" method="post" action="{{ url_for('toggle_event_registration', event_id=event.id) }}">
+                <button class="{% if event.registration_open %}danger-button{% else %}primary-button{% endif %}" type="submit">
+                    {% if event.registration_open %}Close Registration{% else %}Open Registration{% endif %}
+                </button>
+            </form>
+            <form class="auth-card compact-card" method="post">
+                <input type="hidden" name="action" value="announce_result">
+                <p>Publish live result details for one competition. Deleting this announcement will not remove any winners data.</p>
+
+                <label for="announce_competition_id">Competition</label>
+                <select id="announce_competition_id" name="announce_competition_id" required>
+                    <option value="">Choose competition</option>
+                    {% for competition in event.competitions %}
+                        <option
+                            value="{{ competition.id }}"
+                            data-first-prize="{{ competition.first_prize or 0 }}"
+                            data-second-prize="{{ competition.second_prize or 0 }}"
+                            data-third-prize="{{ competition.third_prize or 0 }}"
+                        >
+                            {{ competition.competition_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label for="announce_position">Position</label>
+                <select id="announce_position" name="position" required>
+                    <option value="">Select position</option>
+                    <option value="1">1st</option>
+                    <option value="2">2nd</option>
+                    <option value="3">3rd</option>
+                </select>
+
+                <label for="announce_result_label">Result label</label>
+                <select id="announce_result_label" name="result_label" required>
+                    <option value="">Select result label</option>
+                    <option value="Winner">Winner</option>
+                    <option value="First Runner-up">First Runner-up</option>
+                    <option value="Second Runner-up">Second Runner-up</option>
+                </select>
+
+                <label for="announce_prize_money">Prize money</label>
+                <input id="announce_prize_money" name="announced_prize_money" type="number" placeholder="Prize amount" readonly>
+
+                <label for="announce_registration_number">Winner registration number</label>
+                <input id="announce_registration_number" name="registration_number" type="text" list="registrationNumberList" placeholder="Search or type registration number">
+                <datalist id="registrationNumberList">
+                    {% for registration in event.registrations if registration.registration_number %}
+                        <option value="{{ registration.registration_number }}">{{ registration.participant_name }}{% if registration.team_name %} - {{ registration.team_name }}{% endif %}</option>
+                    {% endfor %}
+                </datalist>
+
+                <label for="announce_participant_name">Participant name</label>
+                <input id="announce_participant_name" name="participant_name" type="text" placeholder="Student or participant name" required>
+
+                <label for="announce_team_name">Team name</label>
+                <input id="announce_team_name" name="team_name" type="text" placeholder="Team name if applicable">
+
+                <button class="primary-button" type="submit">Announce Result</button>
+            </form>
+        {% endif %}
+
+        {% if can_manage_events %}
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Event manager view</p>
+                    <h2>Registrations</h2>
+                </div>
+            </div>
+            <div class="mini-list">
+                {% for registration in event.registrations %}
+                    <article class="list-card">
+                        <strong>{{ registration.participant_name }}</strong>
+                        <small>{{ registration.competition_name or "No competition" }} - {{ registration.participant_email }} - {{ registration.participant_phone }} - {{ registration.school_name or "-" }} - {{ registration.department }} - {{ registration.study_year }}{% if registration.team_name %} - Team: {{ registration.team_name }} ({{ registration.team_id or "No ID" }}) - Members: {{ registration.team_members or "-" }}{% endif %}</small>
+                    </article>
+                {% else %}
+                    <article class="list-card"><strong>No registrations yet</strong><small>Participants have not submitted this event yet.</small></article>
+                {% endfor %}
+            </div>
+        {% elif current_user.role == 'student' %}
+            {% if event.registration_open %}
+                <form class="auth-card compact-card" method="post">
+                    <p class="eyebrow">Student registration</p>
+                    <h2>Register for this event</h2>
+                    <p>Fill the form and select a competition. This registration is visible only to event managers.</p>
+
+                    <label for="participant_name">Full name</label>
+                    <input id="participant_name" name="participant_name" type="text" value="{{ current_user.name }}" required>
+
+                    <label for="participant_email">Email</label>
+                    <input id="participant_email" name="participant_email" type="email" value="{{ current_user.email }}" required>
+
+                    <label for="participant_phone">Phone number</label>
+                    <input id="participant_phone" name="participant_phone" type="text" value="{{ current_user.phone }}" required>
+
+                    <label for="study_year">Year</label>
+                    <input id="study_year" name="study_year" type="text" value="{{ current_user.study_year or '' }}" required>
+
+                    <label for="registration_number">Registration number</label>
+                    <input id="registration_number" type="text" value="{{ current_user.registration_number or '' }}" readonly>
+
+                    <label for="school_name">School</label>
+                    <input id="school_name" type="text" value="{{ current_user.school_name or '' }}" readonly>
+
+                    <label for="department_name_view">Department</label>
+                    <input id="department_name_view" type="text" value="{{ current_user.department or '' }}" readonly>
+
+                    <label for="competition_id">Select competition</label>
+                    <select id="competition_id" name="competition_id" required>
+                        <option value="">Choose competition</option>
+                        {% for competition in event.competitions %}
+                            <option value="{{ competition.id }}" data-max-team-members="{{ competition.max_team_members or 1 }}">{{ competition.competition_name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="team_name">Team name</label>
+                    <input id="team_name" name="team_name" type="text" placeholder="Enter team name">
+
+                    <label for="team_id">Team ID</label>
+                    <input id="team_id" name="team_id" type="text" placeholder="Enter team ID">
+
+                    <label>Team members</label>
+                    <div class="team-members-stack" id="teamMemberStack" data-team-members-stack>
+                        <input name="team_member_name" type="text" placeholder="Team member 1">
+                    </div>
+                    <small id="teamMemberLimitText">Select a competition to see the allowed team size.</small>
+                    <button class="secondary-button" id="addTeamMemberButton" type="button">Add Team Member</button>
+
+                    <label for="notes">Notes</label>
+                    <input id="notes" name="notes" type="text" placeholder="Optional note">
+                    {% if already_registered %}
+                        <button class="secondary-button" type="button">Already Registered</button>
+                    {% else %}
+                        <button class="primary-button" type="submit">Submit Registration</button>
+                    {% endif %}
+                </form>
+            {% else %}
+                <article class="list-card">
+                    <strong>Registration closed</strong>
+                    <small>This event is still visible, but new registrations are currently closed.</small>
+                </article>
+            {% endif %}
+        {% else %}
+            <article class="list-card">
+                <strong>Registration restricted</strong>
+                <small>Only student accounts can submit registration for live events.</small>
+            </article>
+        {% endif %}
+    </div>
+</section>
+{% if is_admin %}
+<script id="eventRegistrationLookup" type="application/json">{{ event.registrations|tojson }}</script>
+{% endif %}
+{% endblock %}

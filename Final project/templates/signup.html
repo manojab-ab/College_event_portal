@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <form class="auth-card" method="post" enctype="multipart/form-data">
+        <p class="eyebrow">Student sign up</p>
+        <h1>Create your portal account</h1>
+        <p>This sign up form is only for students and participants.</p>
+
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" placeholder="Create username" required>
+
+        <label for="name">Full name</label>
+        <input id="name" name="name" type="text" placeholder="Enter full name" required>
+
+        <label for="registration_number">Registration number</label>
+        <input id="registration_number" name="registration_number" type="text" placeholder="Enter registration number" required>
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" placeholder="Enter email" required>
+
+        <label for="phone">Phone number</label>
+        <input id="phone" name="phone" type="text" placeholder="Enter phone number" required>
+
+        <label for="school_id">Select school</label>
+        <select id="school_id" name="school_id" data-school-select data-department-target="signup_department_id" required>
+            <option value="">Select school</option>
+            {% for school in school_options %}
+                <option value="{{ school.id }}">{{ school.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="signup_department_id">Select department</label>
+        <select id="signup_department_id" name="department_id" required>
+            <option value="">Select department</option>
+            {% for department in department_options_all %}
+                <option value="{{ department.id }}" data-school-id="{{ department.school_id }}">{{ department.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="study_year">Year</label>
+        <input id="study_year" name="study_year" type="text" placeholder="Enter year of study">
+
+        <label for="profile_pic">Profile picture (optional)</label>
+        <input id="profile_pic" name="profile_pic" type="file" accept="image/*">
+
+        <label for="password">Set password</label>
+        <input id="password" name="password" type="password" placeholder="Create password" required>
+
+        <label for="confirm_password">Confirm password</label>
+        <input id="confirm_password" name="confirm_password" type="password" placeholder="Confirm password" required>
+
+        <label class="check-row">
+            <input class="password-toggle" data-target="password,confirm_password" type="checkbox">
+            <span>Show password</span>
+        </label>
+
+        <button class="primary-button" type="submit">Complete Sign Up</button>
+    </form>
+</section>
+{% endblock %}

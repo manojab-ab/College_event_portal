@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Event | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <p class="eyebrow">Edit event</p>
+    <h1>{{ event.title }}</h1>
+    <p>Update the main event details and the competition values for this live event.</p>
+</section>
+
+<section class="panel">
+    <form class="form-panel" method="post" enctype="multipart/form-data">
+        <div class="form-grid">
+            <input name="title" type="text" value="{{ event.title }}" placeholder="Event title" required>
+            <select id="edit_event_school_id" name="school_id" data-school-select data-department-target="edit_event_department_id" required>
+                <option value="">Select school</option>
+                {% for school in school_options %}
+                    <option value="{{ school.id }}" {% if school.id == event.school_id %}selected{% endif %}>{{ school.name }}</option>
+                {% endfor %}
+            </select>
+            <select id="edit_event_department_id" name="department_name">
+                <option value="">Select department</option>
+                {% for department in department_options_all %}
+                    <option value="{{ department.name }}" data-school-id="{{ department.school_id }}" {% if department.name == event.department_name %}selected{% endif %}>{{ department.name }}</option>
+                {% endfor %}
+            </select>
+            <input name="total_prize_money" type="number" value="{{ event.total_prize_money or 0 }}" placeholder="Total prize money">
+            <input name="event_year" type="text" value="{{ event.event_year or '' }}" placeholder="Event year">
+            <input name="description" type="text" value="{{ event.description or '' }}" placeholder="Short description">
+        </div>
+
+        <label class="check-row">
+            <input name="registration_open" type="checkbox" {% if event.registration_open %}checked{% endif %}>
+            <span>Keep registration open</span>
+        </label>
+
+        <label for="event_wallpaper">Replace wallpaper (optional)</label>
+        <input id="event_wallpaper" name="event_wallpaper" type="file" accept="image/*">
+
+        <label for="event_poster">Replace corner image / poster (optional)</label>
+        <input id="event_poster" name="event_poster" type="file" accept="image/*">
+
+        <div class="competition-stack">
+            {% for competition in event.competitions %}
+                <div class="competition-card">
+                    <strong>{{ competition.competition_name }}</strong>
+                    <div class="form-grid">
+                        <input name="competition_{{ competition.id }}_name" type="text" value="{{ competition.competition_name }}" placeholder="Competition name">
+                        <input name="competition_{{ competition.id }}_venue" type="text" value="{{ competition.venue or '' }}" placeholder="Competition venue">
+                        <input name="competition_{{ competition.id }}_max_team_members" type="number" min="1" value="{{ competition.max_team_members or 1 }}" placeholder="Max team members">
+                        <input name="competition_{{ competition.id }}_first_prize" type="number" value="{{ competition.first_prize or 0 }}" placeholder="1st prize">
+                        <input name="competition_{{ competition.id }}_second_prize" type="number" value="{{ competition.second_prize or 0 }}" placeholder="2nd prize">
+                        <input name="competition_{{ competition.id }}_third_prize" type="number" value="{{ competition.third_prize or 0 }}" placeholder="3rd prize">
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="action-row">
+            <button class="primary-button" type="submit">Update Event</button>
+            <a class="secondary-button" href="{{ url_for('admin_records') }}">Back to Event Manager</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

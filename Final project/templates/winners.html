@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Winners | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <p class="eyebrow">Winners</p>
+    <h1>Select event, competition, year, and school</h1>
+    <p>All created events appear here. After you choose an event, the competition list updates for that event and then the winners data can be shown.</p>
+</section>
+
+<section class="panel">
+    <form class="filter-row" method="get">
+        <select id="winner_event_name" name="event_name">
+            <option value="">All events</option>
+            {% for event_name in event_names %}
+                <option value="{{ event_name }}" {% if selected_event == event_name %}selected{% endif %}>{{ event_name }}</option>
+            {% endfor %}
+        </select>
+
+        <select id="winner_competition_name" name="competition_name">
+            <option value="">{% if selected_event %}{% if competition_options %}Select competition{% else %}No competitions under this event{% endif %}{% else %}Select event first{% endif %}</option>
+            {% for competition_name in competition_options %}
+                <option value="{{ competition_name }}" {% if selected_competition == competition_name %}selected{% endif %}>{{ competition_name }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="year">
+            <option value="">Select year</option>
+            {% for year in year_options %}
+                <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+        <select name="school">
+            <option value="">Select school</option>
+            {% for school in school_options %}
+                <option value="{{ school.name }}" {% if selected_school == school.name %}selected{% endif %}>{{ school.name }}</option>
+            {% endfor %}
+        </select>
+        <button class="primary-button" type="submit">Show Winners</button>
+    </form>
+</section>
+
+<script id="winnerCompetitionMap" type="application/json">{{ event_competition_map|tojson }}</script>
+
+{% if ready_to_show %}
+    <section class="panel">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Competition</th>
+                        <th>School</th>
+                        <th>Student</th>
+                        <th>Department</th>
+                        <th>Position</th>
+                        <th>Result</th>
+                        <th>Prize Money</th>
+                        <th>Year</th>
+                        {% if can_manage_events %}
+                            <th>Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in winners %}
+                        <tr>
+                            <td>{{ row.event_name }}</td>
+                            <td>{{ row.competition_name or row.event_name }}</td>
+                            <td>{{ row.school_name or "-" }}</td>
+                            <td>{{ row.student_name }}</td>
+                            <td>{{ row.department }}</td>
+                            <td>{{ row.position }}</td>
+                            <td>{{ row.result }}</td>
+                            <td>Rs. {{ "{:,}".format(row.prize_money or 0) }}</td>
+                            <td>{{ row.academic_year }}</td>
+                            {% if can_manage_events %}
+                                <td>
+                                    {% if row.source == 'announcement' %}
+                                        <span class="locked-tag">Live result</span>
+                                    {% else %}
+                                        <a class="table-action" href="{{ url_for('edit_record', record_id=row.id) }}">Edit</a>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{% if can_manage_events %}10{% else %}9{% endif %}">No winner data found for the selected filters.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endif %}
+
+{% if ready_to_show %}
+    <section class="download-row">
+        <a class="primary-button" href="{{ url_for('download_winners', event_name=selected_event, competition_name=selected_competition, school=selected_school, year=selected_year) }}">Download Winners CSV</a>
+    </section>
+{% endif %}
+{% endblock %}

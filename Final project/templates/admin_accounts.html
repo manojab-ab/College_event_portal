@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <p class="eyebrow">Account manager</p>
+    <h1>All portal accounts and school setup</h1>
+    <p>Admin can create accounts, manage schools and departments, and review account activity.</p>
+</section>
+
+<section class="content-grid">
+    <div class="panel wide-panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Activity bar</p>
+                <h2>Recent user activity</h2>
+            </div>
+        </div>
+        <div class="mini-list">
+            {% for activity in activity_logs %}
+                <article class="list-card activity-card">
+                    <img class="tiny-avatar" src="{{ url_for('static', filename=activity.profile_pic_path or 'uploads/default_profile.svg') }}" alt="Profile">
+                    <div>
+                        <strong>{{ activity.name or "Unknown user" }} - {{ activity.action|replace("_", " ")|title }}</strong>
+                        <small>{{ activity.email or "-" }} - {{ activity.phone or "-" }} - {{ activity.role or "-" }} - {{ activity.created_at }}</small>
+                    </div>
+                </article>
+            {% else %}
+                <article class="list-card"><strong>No activity yet</strong><small>Login, logout, and account creation activity will appear here.</small></article>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Users by year</p>
+                <h2>Account count</h2>
+            </div>
+        </div>
+        <div class="mini-list">
+            {% for group in year_groups %}
+                <article class="list-card">
+                    <strong>{{ group.year_label }}</strong>
+                    <small>{{ group.total }} users</small>
+                </article>
+            {% else %}
+                <article class="list-card"><strong>No users</strong><small>No year-wise users found.</small></article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="panel form-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Admin create account</p>
+            <h2>New user account</h2>
+        </div>
+    </div>
+    <form method="post" action="{{ url_for('create_account') }}">
+        <div class="form-grid">
+            <select name="role" required>
+                <option value="">Select role</option>
+                <option value="student">Student</option>
+                <option value="faculty">Faculty</option>
+                <option value="coordinator">Coordinator</option>
+                <option value="event organiser">Event Organiser</option>
+            </select>
+            <input name="username" type="text" placeholder="Username" required>
+            <input name="name" type="text" placeholder="Full name" required>
+            <input name="registration_number" type="text" placeholder="Registration number">
+            <input name="email" type="email" placeholder="Email" required>
+            <input name="phone" type="text" placeholder="Phone number" required>
+            <select id="admin_school_id" name="school_id" data-school-select data-department-target="admin_department_id">
+                <option value="">Select school</option>
+                {% for school in schools %}
+                    <option value="{{ school.id }}">{{ school.name }}</option>
+                {% endfor %}
+            </select>
+            <select id="admin_department_id" name="department_id">
+                <option value="">Select department</option>
+                {% for department in departments %}
+                    <option value="{{ department.id }}" data-school-id="{{ department.school_id }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+            <input name="study_year" type="text" placeholder="Year / Designation">
+            <input id="new_account_password" name="password" type="password" placeholder="Set password" required>
+            <input id="new_account_confirm_password" name="confirm_password" type="password" placeholder="Confirm password" required>
+        </div>
+        <label class="check-row">
+            <input class="password-toggle" data-target="new_account_password,new_account_confirm_password" type="checkbox">
+            <span>Show password</span>
+        </label>
+        <button class="primary-button" type="submit">Create Account</button>
+    </form>
+</section>
+
+<section class="content-grid">
+    <div class="panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Manage schools</p>
+                <h2>Add or edit school</h2>
+            </div>
+        </div>
+        <form method="post" action="{{ url_for('create_school') }}">
+            <div class="form-grid">
+                <input name="school_name" type="text" placeholder="New school name" required>
+            </div>
+            <button class="primary-button" type="submit">Add School</button>
+        </form>
+        <div class="mini-list">
+            {% for school in schools %}
+                <article class="list-card">
+                    <strong>{{ school.name }}</strong>
+                    <div class="action-row">
+                        <form method="post" action="{{ url_for('edit_school', school_id=school.id) }}">
+                            <input name="school_name" type="text" value="{{ school.name }}" required>
+                            <button class="table-action" type="submit">Update</button>
+                        </form>
+                        <form method="post" action="{{ url_for('delete_school', school_id=school.id) }}">
+                            <button class="danger-button" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Manage departments</p>
+                <h2>Add or edit department</h2>
+            </div>
+        </div>
+        <form method="post" action="{{ url_for('create_department') }}">
+            <div class="form-grid">
+                <select id="department_school_id" name="school_id" data-school-select data-department-target="department_picker" required>
+                    <option value="">Select school</option>
+                    {% for school in schools %}
+                        <option value="{{ school.id }}">{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+                <input name="department_name" type="text" placeholder="New department name" required>
+            </div>
+            <button class="primary-button" type="submit">Add Department</button>
+        </form>
+        <div class="mini-list">
+            {% for department in departments %}
+                <article class="list-card">
+                    <strong>{{ department.name }}</strong>
+                    <small>
+                        {% for school in schools %}
+                            {% if school.id == department.school_id %}{{ school.name }}{% endif %}
+                        {% endfor %}
+                    </small>
+                    <div class="action-row">
+                        <form method="post" action="{{ url_for('edit_department', department_id=department.id) }}">
+                            <input name="department_name" type="text" value="{{ department.name }}" required>
+                            <button class="table-action" type="submit">Update</button>
+                        </form>
+                        <form method="post" action="{{ url_for('delete_department', department_id=department.id) }}">
+                            <button class="danger-button" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Registration No.</th>
+                    <th>School</th>
+                    <th>Department</th>
+                    <th>Year</th>
+                    <th>Last login</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                    <tr>
+                        <td>{{ account.name }}</td>
+                        <td>{{ account.username or "-" }}</td>
+                        <td>{{ account.role|title }}</td>
+                        <td>{{ account.registration_number or "-" }}</td>
+                        <td>{{ account.school_name or "-" }}</td>
+                        <td>{{ account.department or "-" }}</td>
+                        <td>{{ account.study_year or "-" }}</td>
+                        <td>{{ account.last_login or "Never" }}</td>
+                        <td>
+                            <div class="action-row">
+                                <a class="table-action" href="{{ url_for('edit_account', user_id=account.id) }}">Edit</a>
+                                {% if account.role != 'admin' %}
+                                    <form method="post" action="{{ url_for('delete_account', user_id=account.id) }}">
+                                        <button class="danger-button" type="submit">Delete</button>
+                                    </form>
+                                {% else %}
+                                    <span class="locked-tag">Protected</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
