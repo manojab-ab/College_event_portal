@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Events | College Event Portal{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <p class="eyebrow">Events</p>
+    <h1>All event records</h1>
+    <p>Browse the live event list. Admin can edit from the Admin Data area.</p>
+    <div class="filter-row">
+        <label for="departmentFilter">Filter by department</label>
+        <select id="departmentFilter">
+            <option value="all">All departments</option>
+            {% for department in department_options %}
+                <option value="{{ department }}">{{ department }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</section>
+
+<section class="event-grid" id="eventGrid">
+    {% for event in events %}
+        <article class="event-card" data-departments="{{ event.departments | join(',') }}">
+            <div class="event-topline">
+                <span>{{ event.event_id }}</span>
+                <span>{{ event.event_date_display }}</span>
+            </div>
+            <h3>{{ event.event_name }}</h3>
+            <p>{{ event.venue }} • {{ event.faculty_coordinator }}</p>
+            <div class="event-metrics">
+                <span>{{ event.participant_count }} participants</span>
+                <span>{{ event.department_count }} departments</span>
+                <span>Rs. {{ "{:,}".format(event.prize_pool) }}</span>
+            </div>
+            <small>Winners: {{ event.winner_names }}</small>
+        </article>
+    {% endfor %}
+</section>
+{% endblock %}

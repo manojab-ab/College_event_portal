@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Select Event | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <p class="eyebrow">Select event</p>
+    <h1>Choose school first, then open an event</h1>
+    <p>Open registrations stay in the live event list. Closed registrations move to previous events but stay visible for result and event details.</p>
+</section>
+
+<section class="panel">
+    <form class="filter-row" method="get">
+        <select name="school">
+            <option value="">All schools</option>
+            {% for school in school_options %}
+                <option value="{{ school.name }}" {% if selected_school == school.name %}selected{% endif %}>{{ school.name }}</option>
+            {% endfor %}
+        </select>
+        <button class="primary-button" type="submit">Show Events</button>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Open events</p>
+            <h2>Registration live now</h2>
+        </div>
+    </div>
+    <div class="event-list">
+        {% for event in open_events %}
+            <article class="event-row-card">
+                <div class="event-row-main">
+                    <strong>{{ event.title }}</strong>
+                    <small>{{ event.school_name or "-" }} | {{ event.department_name or "-" }} | {{ event.event_year or "-" }} | {{ event.display_competition_count }} competitions | {{ event.registration_count }} registrations</small>
+                </div>
+                <div class="action-row">
+                    <a class="secondary-button" href="{{ url_for('event_detail', event_id=event.id) }}">Open Event</a>
+                    {% if event.result_count %}
+                        <a class="primary-button" href="{{ url_for('event_detail', event_id=event.id) }}#results-panel">View Result</a>
+                    {% endif %}
+                </div>
+            </article>
+        {% else %}
+            <article class="list-card">
+                <strong>No open events</strong>
+                <small>No event with open registration was found for the selected school.</small>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Previous events</p>
+            <h2>Closed registrations</h2>
+        </div>
+    </div>
+    <div class="event-list">
+        {% for event in closed_events %}
+            <article class="event-row-card muted-event-row">
+                <div class="event-row-main">
+                    <strong>{{ event.title }}</strong>
+                    <small>{{ event.school_name or "-" }} | {{ event.department_name or "-" }} | {{ event.event_year or "-" }} | {{ event.display_competition_count }} competitions | Registration closed</small>
+                </div>
+                <div class="action-row">
+                    <a class="secondary-button" href="{{ url_for('event_detail', event_id=event.id) }}">Open Event</a>
+                    {% if event.result_count %}
+                        <a class="primary-button" href="{{ url_for('event_detail', event_id=event.id) }}#results-panel">View Result</a>
+                    {% endif %}
+                </div>
+            </article>
+        {% else %}
+            <article class="list-card">
+                <strong>No previous events</strong>
+                <small>Closed events will appear here automatically.</small>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="download-row">
+    <a class="primary-button" href="{{ url_for('download_created_events', school=selected_school) }}">Download Event Data CSV</a>
+</section>
+{% endblock %}

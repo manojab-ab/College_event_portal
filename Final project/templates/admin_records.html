@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}Event Manager | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <p class="eyebrow">Event manager</p>
+    <h1>Manage the portal with section buttons</h1>
+    <p>Choose a section first, then fill or edit only that area.</p>
+</section>
+
+<section class="panel">
+    <div class="action-row">
+        {% if can_manage_events %}
+            <button class="secondary-button" type="button" data-panel-target="create-event-panel">Create New Event</button>
+            <button class="secondary-button" type="button" data-panel-target="student-data-panel">Student Data Edit</button>
+            <button class="secondary-button" type="button" data-panel-target="record-manager-panel">Record Manager</button>
+        {% endif %}
+        {% if is_admin %}
+            <button class="secondary-button" type="button" data-panel-target="branding-panel">Portal Branding</button>
+            <button class="secondary-button" type="button" data-panel-target="school-department-panel">School/Department</button>
+        {% endif %}
+        <button class="secondary-button" type="button" data-panel-target="live-events-panel">Live Event List</button>
+        {% if can_export %}
+            <button class="secondary-button" type="button" data-panel-target="export-panel">Export</button>
+        {% endif %}
+    </div>
+</section>
+
+{% if can_manage_events %}
+    <section class="panel manager-panel" id="create-event-panel" hidden>
+        <form class="form-panel" method="post" action="{{ url_for('create_portal_event') }}" enctype="multipart/form-data">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Create new event</p>
+                    <h2>Live event setup</h2>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <input name="title" type="text" placeholder="Event title" required>
+                <select id="event_school_id" name="school_id" data-school-select data-department-target="event_department_id" required>
+                    <option value="">Select school</option>
+                    {% for school in school_options %}
+                        <option value="{{ school.id }}">{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+                <select id="event_department_id" name="department_name">
+                    <option value="">Select department</option>
+                    {% for department in department_options_all %}
+                        <option value="{{ department.name }}" data-school-id="{{ department.school_id }}">{{ department.name }}</option>
+                    {% endfor %}
+                </select>
+                <input name="total_prize_money" type="number" placeholder="Total prize money">
+                <input name="event_year" type="text" placeholder="Event year">
+                <input name="description" type="text" placeholder="Short event description">
+            </div>
+
+            <label for="event_wallpaper">Event wallpaper (optional)</label>
+            <input id="event_wallpaper" name="event_wallpaper" type="file" accept="image/*">
+
+            <label for="event_poster">Corner image / registration poster (optional)</label>
+            <input id="event_poster" name="event_poster" type="file" accept="image/*">
+
+            <div class="competition-stack" id="competitionStack">
+                <div class="competition-card" data-competition-card>
+                    <strong>Competition 1</strong>
+                    <div class="form-grid">
+                        <input name="competition_name_1" type="text" placeholder="Competition name">
+                        <input name="competition_venue_1" type="text" placeholder="Competition venue">
+                        <input name="max_team_members_1" type="number" min="1" value="1" placeholder="Max team members">
+                        <input name="first_prize_1" type="number" placeholder="1st prize">
+                        <input name="second_prize_1" type="number" placeholder="2nd prize">
+                        <input name="third_prize_1" type="number" placeholder="3rd prize">
+                    </div>
+                </div>
+            </div>
+            <button class="secondary-button" id="addCompetitionButton" type="button">Add Competition Slot</button>
+            <button class="primary-button" type="submit">Create New Event</button>
+        </form>
+    </section>
+
+    <section class="panel manager-panel" id="student-data-panel" hidden>
+        <form class="form-panel" method="post">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Student data edit</p>
+                    <h2>Add or correct student event data</h2>
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <input name="student_id" type="text" placeholder="Student ID / Registration No.">
+                <input name="student_name" type="text" placeholder="Student name" required>
+                <input name="competition_name" type="text" placeholder="Competition name">
+                <select name="school_name">
+                    <option value="">Select school</option>
+                    {% for school in school_options %}
+                        <option value="{{ school.name }}">{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+                <input name="department" type="text" placeholder="Department">
+                <input name="study_year" type="text" placeholder="Study year">
+                <input name="event_id" type="text" value="SAMYUTI-2026" placeholder="Event ID">
+                <input name="event_name" type="text" value="Samyuti" placeholder="Event name" required>
+                <input name="event_date" type="date" value="2026-03-28">
+                <input name="academic_year" type="text" placeholder="Academic year">
+                <input name="team_id" type="text" placeholder="Team ID">
+                <input name="team_size" type="number" placeholder="Team size">
+                <input name="position" type="text" placeholder="Position">
+                <input name="result" type="text" placeholder="Result">
+                <input name="prize_money" type="number" placeholder="Prize money">
+                <input name="faculty_coordinator" type="text" placeholder="Faculty coordinator">
+                <input name="venue" type="text" placeholder="Venue">
+                <input name="team_members" type="text" placeholder="Team members comma separated">
+            </div>
+
+            <button class="primary-button" type="submit">Save Student Data</button>
+        </form>
+    </section>
+{% endif %}
+
+{% if is_admin %}
+    <section class="panel manager-panel" id="branding-panel" hidden>
+        <form class="panel form-panel" method="post" action="{{ url_for('update_branding') }}" enctype="multipart/form-data">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Portal branding</p>
+                    <h2>Website name, logo, and wallpapers</h2>
+                </div>
+            </div>
+
+            <label for="site_name">Website name</label>
+            <input id="site_name" name="site_name" type="text" value="{{ site_name }}" placeholder="Website name">
+
+            <label for="logo_image">Add logo image</label>
+            <input id="logo_image" name="logo_image" type="file" accept="image/*">
+
+            <label for="wallpaper_image">Default wallpaper</label>
+            <input id="wallpaper_image" name="wallpaper_image" type="file" accept="image/*">
+
+            <label for="page_location">Page location for wallpaper</label>
+            <select id="page_location" name="page_location">
+                <option value="">Select page location</option>
+                <option value="login">Login / Signup pages</option>
+                <option value="dashboard">Dashboard page</option>
+                <option value="events">Select Event / Event pages</option>
+                <option value="stats">Stats pages</option>
+                <option value="winners">Winners page</option>
+                <option value="admin">Admin / Event Manager pages</option>
+            </select>
+
+            <label for="page_wallpaper_image">Wallpaper for selected page</label>
+            <input id="page_wallpaper_image" name="page_wallpaper_image" type="file" accept="image/*">
+
+            <button class="primary-button" type="submit">Update Branding</button>
+        </form>
+    </section>
+
+    <section class="panel manager-panel" id="school-department-panel" hidden>
+        <div class="content-grid">
+            <form class="panel form-panel" method="post" action="{{ url_for('create_school') }}">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">School/Department</p>
+                        <h2>Add new school</h2>
+                    </div>
+                </div>
+                <p>Create the school first, and you can also add its first department here.</p>
+                <div class="form-grid">
+                    <input name="school_name" type="text" placeholder="New school name" required>
+                    <input name="department_name" type="text" placeholder="First department under this school">
+                </div>
+                <button class="primary-button" type="submit">Add New School</button>
+            </form>
+
+            <form class="panel form-panel" method="post" action="{{ url_for('create_department') }}">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">School/Department</p>
+                        <h2>Add department under existing school</h2>
+                    </div>
+                </div>
+                <p>Select the school first, then add the department under that school.</p>
+                <div class="form-grid">
+                    <select id="existing_school_department_id" name="school_id" data-school-select data-department-target="existing_department_id" required>
+                        <option value="">Select existing school</option>
+                        {% for school in school_options %}
+                            <option value="{{ school.id }}">{{ school.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <input name="department_name" type="text" placeholder="New department name" required>
+                </div>
+                <button class="primary-button" type="submit">Add New Department</button>
+            </form>
+        </div>
+
+        <div class="content-grid">
+            <div class="panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Existing schools</p>
+                        <h2>Edit or delete school</h2>
+                    </div>
+                </div>
+                <div class="mini-list">
+                    {% for school in school_options %}
+                        <article class="list-card">
+                            <strong>{{ school.name }}</strong>
+                            <div class="action-row">
+                                <form method="post" action="{{ url_for('edit_school', school_id=school.id) }}">
+                                    <input name="school_name" type="text" value="{{ school.name }}" required>
+                                    <button class="table-action" type="submit">Update</button>
+                                </form>
+                                <form method="post" action="{{ url_for('delete_school', school_id=school.id) }}">
+                                    <button class="danger-button" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Existing departments</p>
+                        <h2>Edit or delete departments by school</h2>
+                    </div>
+                </div>
+                <div class="mini-list">
+                    {% for school in school_options %}
+                        <article class="list-card">
+                            <strong>{{ school.name }}</strong>
+                            <small>Select and manage the departments under this school.</small>
+                            <div class="mini-list">
+                                {% for department in department_options_all if department.school_id == school.id %}
+                                    <article class="list-card">
+                                        <strong>{{ department.name }}</strong>
+                                        <div class="action-row">
+                                            <form method="post" action="{{ url_for('edit_department', department_id=department.id) }}">
+                                                <input name="department_name" type="text" value="{{ department.name }}" required>
+                                                <button class="table-action" type="submit">Update</button>
+                                            </form>
+                                            <form method="post" action="{{ url_for('delete_department', department_id=department.id) }}">
+                                                <button class="danger-button" type="submit">Delete</button>
+                                            </form>
+                                        </div>
+                                    </article>
+                                {% else %}
+                                    <article class="list-card">
+                                        <strong>No departments yet</strong>
+                                        <small>Add a new department for this school above.</small>
+                                    </article>
+                                {% endfor %}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+{% endif %}
+
+<section class="panel manager-panel" id="live-events-panel">
+    <div class="section-heading">
+        <div>
+            <p class="eyebrow">Created events</p>
+            <h2>Live event list</h2>
+        </div>
+    </div>
+    <div class="mini-list">
+        {% for event in created_events %}
+            <article class="list-card">
+                <strong>{{ event.title }}</strong>
+                <small>{{ event.school_name or "-" }} - {{ event.department_name or "-" }} - {{ event.event_year or "-" }} - {{ event.competition_count }} competitions - {{ event.registration_count }} registrations - {% if event.registration_open %}Registration open{% else %}Registration closed{% endif %}</small>
+                <div class="action-row">
+                    <a class="table-action" href="{{ url_for('event_detail', event_id=event.id) }}">Open</a>
+                    {% if is_admin %}
+                        <a class="table-action" href="{{ url_for('edit_portal_event', event_id=event.id) }}">Edit Event</a>
+                    {% endif %}
+                    {% if is_admin %}
+                        <form method="post" action="{{ url_for('delete_portal_event', event_id=event.id) }}">
+                            <button class="danger-button" type="submit">Delete Event</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% else %}
+            <article class="list-card"><strong>No created events yet</strong><small>Create a new event to open student registration.</small></article>
+        {% endfor %}
+    </div>
+</section>
+
+{% if can_export %}
+    <section class="panel manager-panel" id="export-panel" hidden>
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Export</p>
+                <h2>Download CSV</h2>
+            </div>
+        </div>
+        <div class="mini-list">
+            <a class="list-card link-card" href="{{ url_for('export_records') }}">
+                <strong>Download all records</strong>
+                <small>CSV file for complete portal data.</small>
+            </a>
+            {% for school in school_options %}
+                <a class="list-card link-card" href="{{ url_for('export_records', school=school.name) }}">
+                    <strong>{{ school.name }}</strong>
+                    <small>Export records only for this school.</small>
+                </a>
+            {% endfor %}
+            {% for year in available_years %}
+                <a class="list-card link-card" href="{{ url_for('export_records', year=year) }}">
+                    <strong>Download {{ year }}</strong>
+                    <small>Export data filtered by academic year.</small>
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+
+{% if can_manage_events %}
+    <section class="panel manager-panel" id="record-manager-panel" hidden>
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Record manager</p>
+                <h2>Existing event entries</h2>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Competition</th>
+                        <th>School</th>
+                        <th>Student</th>
+                        <th>Department</th>
+                        <th>Year</th>
+                        <th>Prize</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td>{{ record.event_name }}</td>
+                            <td>{{ record.competition_name or record.event_name }}</td>
+                            <td>{{ record.school_name or "-" }}</td>
+                            <td>{{ record.student_name }}</td>
+                            <td>{{ record.department or "-" }}</td>
+                            <td>{{ record.academic_year or "-" }}</td>
+                            <td>Rs. {{ "{:,}".format(record.prize_money or 0) }}</td>
+                            <td>
+                                <div class="action-row">
+                                    <a class="table-action" href="{{ url_for('edit_record', record_id=record.id) }}">Edit</a>
+                                    {% if is_admin %}
+                                        <form method="post" action="{{ url_for('delete_record', record_id=record.id) }}">
+                                            <button class="danger-button" type="submit">Delete</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endif %}
+{% endblock %}
