@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="wallpaper-layer"{% if current_wallpaper %} style="background-image: linear-gradient(rgba(7, 15, 30, 0.62), rgba(7, 15, 30, 0.62)), url('{{ url_for('static', filename=current_wallpaper) }}');"{% endif %}></div>
+    <div class="app-shell">
+        <header class="site-header">
+            <a class="brand" href="{{ url_for('dashboard' if logged_in else 'home') }}">
+                {% if portal_settings and portal_settings.logo_path %}
+                    <span class="brand-image-wrap"><img class="brand-image" src="{{ url_for('static', filename=portal_settings.logo_path) }}" alt="Portal logo"></span>
+                {% else %}
+                    <span class="brand-mark">CE</span>
+                {% endif %}
+                <span>
+                    <strong>{{ site_name }}</strong>
+                    <small>Live participation and admin management system</small>
+                </span>
+            </a>
+
+            <nav class="site-nav">
+                {% if logged_in %}
+                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('event_center') }}">Select Event</a>
+                    <a href="{{ url_for('stats_view') }}">Stats</a>
+                    <a href="{{ url_for('winners_view') }}">Winners</a>
+                    <a href="{{ url_for('visuals_view') }}">Visuals</a>
+                    {% if is_admin %}
+                        <a href="{{ url_for('students') }}">Profiles</a>
+                        <a href="{{ url_for('about') }}">About</a>
+                    {% endif %}
+                    {% if can_access_event_manager %}
+                        <a href="{{ url_for('admin_records') }}">Event Manager</a>
+                    {% endif %}
+                    {% if is_admin %}
+                        <a href="{{ url_for('admin_accounts') }}">Accounts</a>
+                    {% else %}
+                        <a href="{{ url_for('profile') }}">My Profile</a>
+                    {% endif %}
+                    <a class="nav-button" href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                    <a href="{{ url_for('participant_login') }}">Log In</a>
+                {% endif %}
+            </nav>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <section class="flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </section>
+            {% endif %}
+        {% endwith %}
+
+        <main class="page-body">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

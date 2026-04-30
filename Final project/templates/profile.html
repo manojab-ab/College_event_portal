@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{% if admin_profile_view %}Student Profile{% else %}My Profile{% endif %} | {{ site_name }}{% endblock %}
+
+{% block content %}
+{% set profile_user = viewed_account if admin_profile_view else current_user %}
+<section class="page-intro">
+    <img class="profile-avatar" src="{{ url_for('static', filename=profile_user.profile_pic_path or 'uploads/default_profile.svg') }}" alt="Profile picture">
+    <p class="eyebrow">{% if admin_profile_view %}User profile{% else %}My profile{% endif %}</p>
+    <h1>{{ profile_user.name }}</h1>
+    <p>{% if admin_profile_view %}Admin view of full student details and participation history.{% else %}Your account is active. You can update your profile picture and password here.{% endif %}</p>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card">
+        <span>Role</span>
+        <strong>{{ profile_user.role|title }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>Registration No.</span>
+        <strong>{{ profile_user.registration_number or "-" }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>School / Department</span>
+        <strong>{{ profile_user.school_name or "-" }} / {{ profile_user.department or "-" }}</strong>
+    </article>
+    <article class="stat-card">
+        <span>Phone</span>
+        <strong>{{ profile_user.phone or "-" }}</strong>
+    </article>
+</section>
+
+{% if admin_profile_view %}
+    <section class="download-row">
+        <a class="primary-button" href="{{ url_for('edit_account', user_id=profile_user.id) }}">Edit User Profile</a>
+    </section>
+{% endif %}
+
+{% if not admin_profile_view %}
+    <section class="content-grid">
+        <div class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Edit profile picture</p>
+                    <h2>Upload new image</h2>
+                </div>
+            </div>
+            <form class="form-panel" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="profile_pic">
+                <input name="profile_pic" type="file" accept="image/*" required>
+                <button class="primary-button" type="submit">Update Profile Picture</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Change password</p>
+                    <h2>Update password</h2>
+                </div>
+            </div>
+            <form class="form-panel" method="post">
+                <input type="hidden" name="action" value="change_password">
+                <input id="current_password" name="current_password" type="password" placeholder="Current password" required>
+                <input id="new_password_profile" name="new_password" type="password" placeholder="New password" required>
+                <input id="confirm_password_profile" name="confirm_password" type="password" placeholder="Confirm new password" required>
+                <label class="check-row">
+                    <input class="password-toggle" data-target="current_password,new_password_profile,confirm_password_profile" type="checkbox">
+                    <span>Show password</span>
+                </label>
+                <button class="primary-button" type="submit">Change Password</button>
+            </form>
+        </div>
+    </section>
+{% endif %}
+
+{% if registration_history is defined or announced_wins is defined or record_history is defined or combined_history is defined %}
+    <section class="panel">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Student history</p>
+                <h2>Events registered and wins</h2>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Registrations</p>
+                        <h2>Events registered by this student</h2>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Competition</th>
+                                <th>Year</th>
+                                <th>Team</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in registration_history %}
+                                <tr>
+                                    <td>{{ row.event_title }}</td>
+                                    <td>{{ row.competition_name or "-" }}</td>
+                                    <td>{{ row.event_year or "-" }}</td>
+                                    <td>{{ row.team_name or "-" }}</td>
+                                    <td>Registered</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="5">No event registrations found for this student.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Competition</th>
+                        <th>Year</th>
+                        <th>Result</th>
+                        <th>Prize</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in combined_history %}
+                        <tr>
+                            <td>{{ row.event_name }}</td>
+                            <td>{{ row.competition_name or row.event_name }}</td>
+                            <td>{{ row.academic_year or "-" }}</td>
+                            <td>{{ row.result or "-" }}</td>
+                            <td>Rs. {{ "{:,}".format(row.prize_money or 0) }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5">No participation history found for this student.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endif %}
+{% endblock %}

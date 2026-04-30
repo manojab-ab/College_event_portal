@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Record | College Event Portal{% endblock %}
+
+{% block content %}
+<section class="auth-shell wide-auth">
+    <form class="auth-card wide-card" method="post">
+        <p class="eyebrow">Edit event record</p>
+        <h1>{{ record.event_name }}</h1>
+
+        <div class="form-grid">
+            <input name="student_id" type="text" value="{{ record.student_id or '' }}" placeholder="Student ID">
+            <input name="student_name" type="text" value="{{ record.student_name }}" placeholder="Student name" required>
+            <input name="competition_name" type="text" value="{{ record.competition_name or '' }}" placeholder="Competition name">
+            <select name="school_name">
+                <option value="">Select school</option>
+                {% for school in school_options %}
+                    <option value="{{ school.name }}" {% if record.school_name == school.name %}selected{% endif %}>{{ school.name }}</option>
+                {% endfor %}
+            </select>
+            <input name="department" type="text" value="{{ record.department or '' }}" placeholder="Department">
+            <input name="study_year" type="text" value="{{ record.study_year or '' }}" placeholder="Study year">
+            <input name="event_id" type="text" value="{{ record.event_id or '' }}" placeholder="Event ID">
+            <input name="event_name" type="text" value="{{ record.event_name }}" placeholder="Event name" required>
+            <input name="event_date" type="date" value="{{ record.event_date or '' }}">
+            <input name="academic_year" type="text" value="{{ record.academic_year or '' }}" placeholder="Academic year">
+            <input name="team_id" type="text" value="{{ record.team_id or '' }}" placeholder="Team ID">
+            <input name="team_size" type="number" value="{{ record.team_size or 0 }}" placeholder="Team size">
+            <input name="position" type="text" value="{{ record.position or '' }}" placeholder="Position">
+            <input name="result" type="text" value="{{ record.result or '' }}" placeholder="Result">
+            <input name="prize_money" type="number" value="{{ record.prize_money or 0 }}" placeholder="Prize money">
+            <input name="faculty_coordinator" type="text" value="{{ record.faculty_coordinator or '' }}" placeholder="Faculty coordinator">
+            <input name="venue" type="text" value="{{ record.venue or '' }}" placeholder="Venue">
+            <input name="team_members" type="text" value="{{ record.team_members or '' }}" placeholder="Team members">
+        </div>
+
+        <button class="primary-button" type="submit">Save Record</button>
+    </form>
+</section>
+{% endblock %}

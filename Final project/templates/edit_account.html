@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Account | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <form class="auth-card" method="post">
+        <p class="eyebrow">Edit account</p>
+        <h1>{{ account.name }}</h1>
+
+        <label for="role">Role</label>
+        <select id="role" name="role" {% if account.role == 'admin' %}disabled{% endif %}>
+            <option value="student" {% if account.role == 'student' %}selected{% endif %}>Student</option>
+            <option value="faculty" {% if account.role == 'faculty' %}selected{% endif %}>Faculty</option>
+            <option value="coordinator" {% if account.role == 'coordinator' %}selected{% endif %}>Coordinator</option>
+            <option value="event organiser" {% if account.role == 'event organiser' %}selected{% endif %}>Event Organiser</option>
+            <option value="admin" {% if account.role == 'admin' %}selected{% endif %}>Admin</option>
+        </select>
+
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" value="{{ account.username or '' }}" {% if account.role == 'admin' %}readonly{% endif %} required>
+
+        <label for="name">Name</label>
+        <input id="name" name="name" type="text" value="{{ account.name }}" required>
+
+        <label for="registration_number">Registration number</label>
+        <input id="registration_number" name="registration_number" type="text" value="{{ account.registration_number or '' }}">
+
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" value="{{ account.email or '' }}">
+
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" type="text" value="{{ account.phone or '' }}">
+
+        <label for="edit_school_id">School</label>
+        <select id="edit_school_id" name="school_id" data-school-select data-department-target="edit_department_id">
+            <option value="">Select school</option>
+            {% for school in schools %}
+                <option value="{{ school.id }}" {% if account.school_id == school.id %}selected{% endif %}>{{ school.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="edit_department_id">Department</label>
+        <select id="edit_department_id" name="department_id">
+            <option value="">Select department</option>
+            {% for department in departments %}
+                <option value="{{ department.id }}" data-school-id="{{ department.school_id }}" {% if account.department == department.name %}selected{% endif %}>{{ department.name }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="study_year">Year</label>
+        <input id="study_year" name="study_year" type="text" value="{{ account.study_year or '' }}">
+
+        <label for="new_password">Change password</label>
+        <input id="new_password" name="new_password" type="password" placeholder="Enter new password">
+
+        <label for="confirm_password">Confirm new password</label>
+        <input id="confirm_password" name="confirm_password" type="password" placeholder="Confirm new password">
+
+        <label class="check-row">
+            <input class="password-toggle" data-target="new_password,confirm_password" type="checkbox">
+            <span>Show password</span>
+        </label>
+
+        <button class="primary-button" type="submit">Save Account</button>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login | College Event Portal{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <form class="auth-card" method="post">
+        <p class="eyebrow">Admin access only</p>
+        <h1>Admin login</h1>
+        <p>Use the existing admin account. Admin does not sign up through the public portal.</p>
+
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" placeholder="Enter admin username" required>
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" placeholder="Enter admin password" required>
+
+        <label class="check-row">
+            <input class="password-toggle" data-target="password" type="checkbox">
+            <span>Show password</span>
+        </label>
+
+        <button class="primary-button" type="submit">Login as Admin</button>
+    </form>
+</section>
+{% endblock %}
