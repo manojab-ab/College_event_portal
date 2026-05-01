@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Announced Result | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="page-intro">
+    <p class="eyebrow">Edit announced result</p>
+    <h1>{{ announcement.event_name or "Event result" }}</h1>
+    <p>Update the announced result details stored in the live result board.</p>
+</section>
+
+<section class="panel">
+    <form class="form-panel" method="post">
+        <input type="hidden" name="event_name" value="{{ announcement.event_name or '' }}">
+        <div class="form-grid">
+            <input name="competition_name" type="text" value="{{ announcement.competition_name or '' }}" placeholder="Competition name" required>
+            <input name="position" type="text" value="{{ announcement.position or '' }}" placeholder="Position" required>
+            <input name="result_label" type="text" value="{{ announcement.result_label or '' }}" placeholder="Result label" required>
+            <input name="prize_money" type="number" value="{{ announcement.prize_money or 0 }}" placeholder="Prize money">
+            <input name="registration_number" type="text" value="{{ announcement.registration_number or '' }}" placeholder="Registration number">
+            <input name="participant_name" type="text" value="{{ announcement.participant_name or '' }}" placeholder="Participant name" required>
+            <input name="team_name" type="text" value="{{ announcement.team_name or '' }}" placeholder="Team name">
+        </div>
+        <div class="action-row">
+            <button class="primary-button" type="submit">Update Announced Result</button>
+            <a class="secondary-button" href="{{ url_for('admin_records', record_event=announcement.event_name or '') }}">Back to Record Manager</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
