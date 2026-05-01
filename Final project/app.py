@@ -866,6 +866,43 @@ def build_visual_rows(records: list[dict], created_events: list[dict]) -> list[d
     return visual_rows
 
 
+def build_record_manager_rows(records: list[dict], announcement_rows: list[dict]) -> list[dict]:
+    # Combines saved historical records and announced live results for the admin record manager.
+    merged_rows = [
+        {
+            **dict(row),
+            "source": "record",
+        }
+        for row in records
+    ]
+    merged_rows.extend(
+        {
+            "id": row.get("id"),
+            "event_name": row.get("event_name") or "",
+            "competition_name": row.get("competition_name") or row.get("event_name") or "",
+            "school_name": row.get("school_name") or "",
+            "student_name": row.get("student_name") or "",
+            "department": row.get("department") or "",
+            "academic_year": row.get("academic_year") or "",
+            "prize_money": row.get("prize_money") or 0,
+            "position": row.get("position") or "",
+            "result": row.get("result") or "",
+            "registration_number": row.get("registration_number") or "",
+            "team_name": row.get("team_name") or "",
+            "source": "announcement",
+        }
+        for row in announcement_rows
+    )
+    return sorted(
+        merged_rows,
+        key=lambda row: (
+            str(row.get("event_name") or "").lower(),
+            str(row.get("competition_name") or "").lower(),
+            str(row.get("student_name") or "").lower(),
+        ),
+    )
+
+
 def build_selected_visual(rows: list[dict], graph_key: str, graph_type: str = "auto") -> dict | None:
     # Builds one chosen chart for the dedicated visuals page.
     if not rows:
@@ -2310,13 +2347,20 @@ def visuals_view():
 def winners_view():
     # Shows winner filters and displays matching historic winners plus announced results.
     portal_data = build_portal_data()
-    selected_event = request.args.get("event_name", "").strip()
-    selected_competition = request.args.get("competition_name", "").strip()
-    selected_year = request.args.get("year", "").strip()
-    selected_school = request.args.get("school", "").strip()
+    raw_selected_event = request.args.get("event_name", "").strip()
+    raw_selected_competition = request.args.get("competition_name", "").strip()
+    raw_selected_year = request.args.get("year", "").strip()
+    raw_selected_school = request.args.get("school", "").strip()
+    selected_event = "" if raw_selected_event == "__all__" else raw_selected_event
+    selected_competition = "" if raw_selected_competition == "__all__" else raw_selected_competition
+    selected_year = "" if raw_selected_year == "__all__" else raw_selected_year
+    selected_school = "" if raw_selected_school == "__all__" else raw_selected_school
     rows = portal_data["records"] + get_announcement_rows()
     created_events = get_created_events_with_competitions()
-    ready_to_show = all([selected_event, selected_competition, selected_school, selected_year])
+    ready_to_show = all(
+        value != ""
+        for value in [raw_selected_event, raw_selected_competition, raw_selected_school, raw_selected_year]
+    )
     filtered = []
     if ready_to_show:
         for row in rows:
@@ -2371,10 +2415,10 @@ def winners_view():
         event_competition_map=event_competition_map,
         ready_to_show=ready_to_show,
         year_options=year_options,
-        selected_event=selected_event,
-        selected_competition=selected_competition,
-        selected_year=selected_year,
-        selected_school=selected_school,
+        selected_event=raw_selected_event,
+        selected_competition=raw_selected_competition,
+        selected_year=raw_selected_year,
+        selected_school=raw_selected_school,
     )
 
 
@@ -2534,10 +2578,32 @@ def admin_records():
             return redirect(url_for("admin_records"))
 
     portal_data = build_portal_data()
+    announcement_rows = get_announcement_rows()
+    selected_record_event = request.args.get("record_event", "").strip()
+    record_manager_rows = build_record_manager_rows(portal_data["records"], announcement_rows)
+    record_manager_event_names = sorted(
+        {
+            row.get("event_name") or ""
+            for row in record_manager_rows
+            if row.get("event_name")
+        }
+    )
+    filtered_record_manager_rows = (
+        [row for row in record_manager_rows if row.get("event_name") == selected_record_event]
+        if selected_record_event
+        else []
+    )
     created_events = get_created_events_with_competitions()
     portal_settings = fetch_one("SELECT * FROM portal_settings WHERE id = 1")
     portal_data["created_events"] = created_events
-    return render_template("admin_records.html", portal_settings=portal_settings, **portal_data)
+    return render_template(
+        "admin_records.html",
+        portal_settings=portal_settings,
+        selected_record_event=selected_record_event,
+        record_manager_event_names=record_manager_event_names,
+        filtered_record_manager_rows=filtered_record_manager_rows,
+        **portal_data,
+    )
 
 
 @app.route("/admin/events/create", methods=["POST"])
@@ -2780,6 +2846,57 @@ def edit_record(record_id: int):
         return redirect(url_for("admin_records"))
 
     return render_template("edit_record.html", record=record)
+
+
+@app.route("/admin/announcements/<int:announcement_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_announcement(announcement_id: int):
+    # Admin-only edit for one announced live result row.
+    announcement = fetch_one("SELECT * FROM event_result_announcements WHERE id = ?", (announcement_id,))
+    if not announcement:
+        flash("Announcement not found.", "error")
+        return redirect(url_for("admin_records"))
+
+    if request.method == "POST":
+        execute(
+            """
+            UPDATE event_result_announcements
+            SET competition_name = ?, position = ?, result_label = ?, prize_money = ?,
+                team_name = ?, registration_number = ?, participant_name = ?
+            WHERE id = ?
+            """,
+            (
+                request.form.get("competition_name", "").strip(),
+                request.form.get("position", "").strip(),
+                request.form.get("result_label", "").strip(),
+                to_int(request.form.get("prize_money")) or 0,
+                request.form.get("team_name", "").strip(),
+                request.form.get("registration_number", "").strip().upper(),
+                request.form.get("participant_name", "").strip(),
+                announcement_id,
+            ),
+        )
+        flash("Announced result updated successfully.", "success")
+        return redirect(url_for("admin_records", record_event=request.form.get("event_name", "").strip()))
+
+    event = fetch_one("SELECT title FROM portal_events WHERE id = ?", (announcement["portal_event_id"],))
+    announcement = dict(announcement)
+    announcement["event_name"] = event["title"] if event else ""
+    return render_template("edit_announcement.html", announcement=announcement)
+
+
+@app.route("/admin/announcements/<int:announcement_id>/delete", methods=["POST"])
+@admin_required
+def delete_announcement_record(announcement_id: int):
+    # Admin-only delete for one announced live result row from record manager.
+    announcement = fetch_one("SELECT * FROM event_result_announcements WHERE id = ?", (announcement_id,))
+    if announcement:
+        event = fetch_one("SELECT title FROM portal_events WHERE id = ?", (announcement["portal_event_id"],))
+        execute("DELETE FROM event_result_announcements WHERE id = ?", (announcement_id,))
+        flash("Announced result deleted.", "success")
+        return redirect(url_for("admin_records", record_event=event["title"] if event else ""))
+    flash("Announcement not found.", "error")
+    return redirect(url_for("admin_records"))
 
 
 @app.route("/admin/records/<int:record_id>/delete", methods=["POST"])
