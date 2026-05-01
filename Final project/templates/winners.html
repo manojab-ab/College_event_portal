@@ -20,7 +20,15 @@
         </select>
 
         <select id="winner_competition_name" name="competition_name">
-            <option value="">{% if selected_event and selected_event != '__all__' %}{% if competition_options %}Select competition{% else %}No competitions under this event{% endif %}{% else %}Select event first{% endif %}</option>
+            <option value="">
+                {% if selected_event == '__all__' %}
+                    Select competition from all events
+                {% elif selected_event %}
+                    {% if competition_options %}Select competition{% else %}No competitions under this event{% endif %}
+                {% else %}
+                    Select event first
+                {% endif %}
+            </option>
             <option value="__all__" {% if selected_competition == '__all__' %}selected{% endif %}>Select all competitions</option>
             {% for competition_name in competition_options %}
                 <option value="{{ competition_name }}" {% if selected_competition == competition_name %}selected{% endif %}>{{ competition_name }}</option>
