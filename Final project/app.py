@@ -2405,6 +2405,15 @@ def winners_view():
             event_competition_map[event_name].append(competition_name)
     for event_name in list(event_competition_map.keys()):
         event_competition_map[event_name] = sorted(event_competition_map[event_name])
+    all_competitions = sorted(
+        {
+            competition_name
+            for competition_list in event_competition_map.values()
+            for competition_name in competition_list
+            if competition_name
+        }
+    )
+    event_competition_map["__all__"] = all_competitions
     competition_options = set(event_competition_map.get(selected_event, [])) if selected_event else set()
     year_options = sorted({str(row.get("academic_year") or "") for row in rows if row.get("academic_year")}, reverse=True)
     return render_template(
