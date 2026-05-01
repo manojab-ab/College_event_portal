@@ -165,10 +165,20 @@ if (winnerEventSelect && winnerCompetitionSelect && winnerCompetitionMapNode) {
         winnerCompetitionSelect.innerHTML = "";
         const placeholder = document.createElement("option");
         placeholder.value = "";
-        placeholder.textContent = eventName
-            ? (competitionNames.length ? "Select competition" : "No competitions under this event")
-            : "Select event first";
+        placeholder.textContent = eventName === "__all__"
+            ? "Select competition from all events"
+            : eventName
+                ? (competitionNames.length ? "Select competition" : "No competitions under this event")
+                : "Select event first";
         winnerCompetitionSelect.appendChild(placeholder);
+
+        const allOption = document.createElement("option");
+        allOption.value = "__all__";
+        allOption.textContent = "Select all competitions";
+        if (selectedValue === "__all__") {
+            allOption.selected = true;
+        }
+        winnerCompetitionSelect.appendChild(allOption);
 
         competitionNames.forEach((competitionName) => {
             const option = document.createElement("option");
