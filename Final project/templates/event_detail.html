@@ -261,9 +261,16 @@
                     <select id="competition_id" name="competition_id" required>
                         <option value="">Choose competition</option>
                         {% for competition in event.competitions %}
-                            <option value="{{ competition.id }}" data-max-team-members="{{ competition.max_team_members or 1 }}">{{ competition.competition_name }}</option>
+                            <option
+                                value="{{ competition.id }}"
+                                data-max-team-members="{{ competition.max_team_members or 1 }}"
+                                {% if competition.id in registered_competition_ids %}data-already-registered="true"{% endif %}
+                            >
+                                {{ competition.competition_name }}{% if competition.id in registered_competition_ids %} - Already registered{% endif %}
+                            </option>
                         {% endfor %}
                     </select>
+                    <small>You can register for multiple competitions in this event, but not the same competition twice.</small>
 
                     <label for="team_name">Team name</label>
                     <input id="team_name" name="team_name" type="text" placeholder="Enter team name">
@@ -280,11 +287,7 @@
 
                     <label for="notes">Notes</label>
                     <input id="notes" name="notes" type="text" placeholder="Optional note">
-                    {% if already_registered %}
-                        <button class="secondary-button" type="button">Already Registered</button>
-                    {% else %}
-                        <button class="primary-button" type="submit">Submit Registration</button>
-                    {% endif %}
+                    <button class="primary-button" id="submitEventRegistrationButton" type="submit">Submit Registration</button>
                 </form>
             {% else %}
                 <article class="list-card">
