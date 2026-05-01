@@ -2086,15 +2086,6 @@ def event_detail(event_id: int):
             flash("Registration is closed for this event. You can still view the event details.", "error")
             return redirect(url_for("event_detail", event_id=event_id))
 
-        # Prevent the same student from registering twice for the same event.
-        existing = fetch_one(
-            "SELECT id FROM event_registrations WHERE portal_event_id = ? AND user_id = ?",
-            (event_id, g.current_user["id"]),
-        )
-        if existing:
-            flash("You already registered for this event.", "error")
-            return redirect(url_for("event_detail", event_id=event_id))
-
         participant_name = request.form.get("participant_name", "").strip()
         participant_email = request.form.get("participant_email", "").strip().lower()
         participant_phone = request.form.get("participant_phone", "").strip()
@@ -2109,6 +2100,17 @@ def event_detail(event_id: int):
         ) if competition_id else None
         if not all([participant_name, participant_email, participant_phone, study_year, competition]):
             flash("Please fill name, email, phone, year, and select a competition.", "error")
+            return redirect(url_for("event_detail", event_id=event_id))
+
+        existing = fetch_one(
+            """
+            SELECT id FROM event_registrations
+            WHERE portal_event_id = ? AND user_id = ? AND competition_id = ?
+            """,
+            (event_id, g.current_user["id"], competition["id"]),
+        )
+        if existing:
+            flash("You already registered for this competition in this event.", "error")
             return redirect(url_for("event_detail", event_id=event_id))
 
         max_team_members = max(1, to_int(competition.get("max_team_members")) or 1)
@@ -2145,12 +2147,19 @@ def event_detail(event_id: int):
         flash("Event registration submitted successfully.", "success")
         return redirect(url_for("event_detail", event_id=event_id))
 
-    already_registered = False
-    if g.current_user["role"] != "admin":
-        already_registered = fetch_one(
-            "SELECT id FROM event_registrations WHERE portal_event_id = ? AND user_id = ?",
-            (event_id, g.current_user["id"]),
-        ) is not None
+    registered_competition_ids: list[int] = []
+    if g.current_user["role"] == "student":
+        registered_competition_ids = [
+            row["competition_id"]
+            for row in fetch_all(
+                """
+                SELECT competition_id FROM event_registrations
+                WHERE portal_event_id = ? AND user_id = ?
+                """,
+                (event_id, g.current_user["id"]),
+            )
+            if row.get("competition_id") is not None
+        ]
     selected_result_competition = request.args.get("selected_result_competition", "").strip()
     announcement_competitions = sorted(
         {
@@ -2167,7 +2176,7 @@ def event_detail(event_id: int):
     return render_template(
         "event_detail.html",
         event=event,
-        already_registered=already_registered,
+        registered_competition_ids=registered_competition_ids,
         announcement_competitions=announcement_competitions,
         selected_result_competition=selected_result_competition,
         displayed_announcements=displayed_announcements,
