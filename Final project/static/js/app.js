@@ -10,6 +10,7 @@ const competitionSelect = document.getElementById("competition_id");
 const addTeamMemberButton = document.getElementById("addTeamMemberButton");
 const teamMemberStack = document.getElementById("teamMemberStack");
 const teamMemberLimitText = document.getElementById("teamMemberLimitText");
+const submitEventRegistrationButton = document.getElementById("submitEventRegistrationButton");
 const winnerEventSelect = document.getElementById("winner_event_name");
 const winnerCompetitionSelect = document.getElementById("winner_competition_name");
 const winnerCompetitionMapNode = document.getElementById("winnerCompetitionMap");
@@ -113,12 +114,20 @@ function getSelectedCompetitionMax() {
 function updateTeamMemberState() {
     if (!teamMemberStack || !teamMemberLimitText || !addTeamMemberButton) return;
     const maxMembers = getSelectedCompetitionMax();
+    const selectedOption = competitionSelect?.options[competitionSelect.selectedIndex];
+    const alreadyRegistered = selectedOption?.dataset.alreadyRegistered === "true";
     while (teamMemberStack.querySelectorAll('input[name="team_member_name"]').length > maxMembers) {
         teamMemberStack.removeChild(teamMemberStack.lastElementChild);
     }
     const currentCount = teamMemberStack.querySelectorAll('input[name="team_member_name"]').length;
-    teamMemberLimitText.textContent = `Maximum team members allowed for this competition: ${maxMembers}`;
+    teamMemberLimitText.textContent = alreadyRegistered
+        ? "You already registered for this competition. Choose another competition in this event."
+        : `Maximum team members allowed for this competition: ${maxMembers}`;
     addTeamMemberButton.disabled = currentCount >= maxMembers;
+    if (submitEventRegistrationButton) {
+        submitEventRegistrationButton.disabled = alreadyRegistered;
+        submitEventRegistrationButton.textContent = alreadyRegistered ? "Already Registered For This Competition" : "Submit Registration";
+    }
 }
 
 function addTeamMemberInput() {
