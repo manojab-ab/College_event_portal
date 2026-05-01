@@ -12,14 +12,16 @@
 <section class="panel">
     <form class="filter-row" method="get">
         <select id="winner_event_name" name="event_name">
-            <option value="">All events</option>
+            <option value="">Select event</option>
+            <option value="__all__" {% if selected_event == '__all__' %}selected{% endif %}>Select all events</option>
             {% for event_name in event_names %}
                 <option value="{{ event_name }}" {% if selected_event == event_name %}selected{% endif %}>{{ event_name }}</option>
             {% endfor %}
         </select>
 
         <select id="winner_competition_name" name="competition_name">
-            <option value="">{% if selected_event %}{% if competition_options %}Select competition{% else %}No competitions under this event{% endif %}{% else %}Select event first{% endif %}</option>
+            <option value="">{% if selected_event and selected_event != '__all__' %}{% if competition_options %}Select competition{% else %}No competitions under this event{% endif %}{% else %}Select event first{% endif %}</option>
+            <option value="__all__" {% if selected_competition == '__all__' %}selected{% endif %}>Select all competitions</option>
             {% for competition_name in competition_options %}
                 <option value="{{ competition_name }}" {% if selected_competition == competition_name %}selected{% endif %}>{{ competition_name }}</option>
             {% endfor %}
@@ -27,12 +29,14 @@
 
         <select name="year">
             <option value="">Select year</option>
+            <option value="__all__" {% if selected_year == '__all__' %}selected{% endif %}>Select all years</option>
             {% for year in year_options %}
                 <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
             {% endfor %}
         </select>
         <select name="school">
             <option value="">Select school</option>
+            <option value="__all__" {% if selected_school == '__all__' %}selected{% endif %}>Select all schools</option>
             {% for school in school_options %}
                 <option value="{{ school.name }}" {% if selected_school == school.name %}selected{% endif %}>{{ school.name }}</option>
             {% endfor %}
